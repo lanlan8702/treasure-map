@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>寻宝路线图</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            text-align: center;
+            background: #f0f8ff;
+        }
+        h1 {
+            color: #2c3e50;
+            margin: 20px 0;
+        }
+        #map-container {
+            width: 800px;
+            height: 550px;
+            margin: 0 auto;
+            position: relative;
+            background: url('https://img.freepik.com/free-vector/blank-green-landscape-background_1308-252.jpg') center/cover;
+            border: 3px solid #3498db;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+        .character {
+            width: 40px;
+            height: 40px;
+            background: url('https://cdn-icons-png.flaticon.com/512/5231/5231019.png') center/cover;
+            position: absolute;
+            transition: all 1s linear;
+            z-index: 10;
+        }
+        .treasure {
+            width: 60px;
+            height: 60px;
+            background: url('https://cdn-icons-png.flaticon.com/512/2037/2037739.png') center/cover;
+            position: absolute;
+            display: none;
+            z-index: 5;
+        }
+        .controls {
+            margin: 20px auto;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            width: 600px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 12px 25px;
+            margin: 0 10px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #27ae60;
+            transform: scale(1.05);
+        }
+        #result {
+            min-height: 80px;
+            padding: 15px;
+            font-size: 18px;
+            color: #34495e;
+            margin: 15px auto;
+            width: 80%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .path-line {
+            position: absolute;
+            background: red;
+            height: 4px;
+            transform-origin: left center;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏴‍☠️ 寻宝探险家</h1>
+    
+    <div class="controls">
+        <button onclick="startListening()">🎤 语音输入路线</button>
+        <button onclick="startJourney()">🚶 开始寻宝</button>
+        <button onclick="checkPosition()">🔍 我到达了</button>
+    </div>
+    
+    <div id="map-container">
+        <div id="char" class="character"></div>
+        <div id="treasure" class="treasure"></div>
+        <!-- 路径线将动态生成 -->
+    </div>
+    
+    <div id="result">等待您的指令...</div>
+
+    <script>
+        // 初始坐标（起点）
+        const startPos = { x: 100, y: 450 };
+        const treasurePos = { x: 650, y: 200 };
+        let currentPos = {...startPos};
+        let pathData = null;
+        let pathLines = [];
+        
+        // 初始化地图
+        function initMap() {
+            const char = document.getElementById('char');
+            const treasure = document.getElementById('treasure');
+            
+            char.style.left = startPos.x + 'px';
+            char.style.top = startPos.y + 'px';
+            
+            treasure.style.left = treasurePos.x + 'px';
+            treasure.style.top = treasurePos.y + 'px';
+        }
+        
+        // 语音输入功能
+        function startListening() {
+            document.getElementById('result').innerHTML = "正在听...请说：'从起点向北走200米，再向东走300米'";
+            
+            // 模拟语音识别结果（实际使用时替换为真实API）
+            setTimeout(() => {
+                simulateVoiceResponse();
+            }, 2000);
+        }
+        
+        // 模拟语音识别结果
+        function simulateVoiceResponse() {
+            pathData = {
+                start: "起点",
+                steps: [
+                    {direction: "north", distance: 200},
+                    {direction: "east", distance: 300}
+                ]
+            };
+            
+            document.getElementById('result').innerHTML = 
+                "<b>路线已接收：</b><br>1. 向北走200米<br>2. 向东走300米";
+        }
+        
+        // 开始寻宝动画
+        function startJourney() {
+            if (!pathData) {
+                document.getElementById('result').innerHTML = "❌ 请先输入路线！";
+                return;
+            }
+            
+            const char = document.getElementById('char');
+            
+            // 清除旧路径线
+            pathLines.forEach(line => line.remove());
+            pathLines = [];
+            
+            // 重置位置
+            char.style.left = startPos.x + 'px';
+            char.style.top = startPos.y + 'px';
+            currentPos = {...startPos};
+            
+            // 隐藏宝藏
+            document.getElementById('treasure').style.display = 'none';
+            
+            // 执行每一步
+            pathData.steps.forEach((step, index) => {
+                setTimeout(() => {
+                    // 绘制路径线
+                    const line = document.createElement('div');
+                    line.className = 'path-line';
+                    
+                    const startX = currentPos.x + 20;
+                    const startY = currentPos.y + 20;
+                    
+                    if(step.direction === 'north') currentPos.y -= step.distance;
+                    if(step.direction === 'south') currentPos.y += step.distance;
+                    if(step.direction === 'east') currentPos.x += step.distance;
+                    if(step.direction === 'west') currentPos.x -= step.distance;
+                    
+                    const endX = currentPos.x + 20;
+                    const endY = currentPos.y + 20;
+                    
+                    // 计算线条长度和角度
+                    const dx = endX - startX;
+                    const dy = endY - startY;
+                    const length = Math.sqrt(dx*dx + dy*dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    line.style.width = length + 'px';
+                    line.style.left = startX + 'px';
+                    line.style.top = (startY - 2) + 'px';
+                    line.style.transform = `rotate(${angle}deg)`;
+                    
+                    document.getElementById('map-container').appendChild(line);
+                    pathLines.push(line);
+                    
+                    // 移动角色
+                    char.style.left = currentPos.x + 'px';
+                    char.style.top = currentPos.y + 'px';
+                    
+                    // 最后一步显示宝藏位置
+                    if(index === pathData.steps.length-1) {
+                        setTimeout(() => {
+                            document.getElementById('treasure').style.display = 'block';
+                            document.getElementById('result').innerHTML = "已到达目的地！请点击<button style='background:#e67e22'>🔍 我到达了</button>确认";
+                        }, 1500);
+                    }
+                }, 2000 * (index + 1));
+            });
+        }
+        
+        // 检查位置
+        function checkPosition() {
+            if (!pathData || pathLines.length === 0) {
+                document.getElementById('result').innerHTML = "❌ 请先完成路线导航！";
+                return;
+            }
+            
+            // 计算与宝藏的距离
+            const dx = currentPos.x - treasurePos.x;
+            const dy = currentPos.y - treasurePos.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if(distance < 60) {
+                // 成功效果
+                document.getElementById('result').innerHTML = 
+                    "<div style='color:#27ae60;font-size:24px;'>🎉 寻宝成功！</div>" +
+                    "<div>恭喜找到宝藏！获得50金币奖励</div>" +
+                    "<div style='margin-top:10px'>🏆 解锁成就：初级探险家</div>";
+                
+                // 宝藏发光效果
+                const treasure = document.getElementById('treasure');
+                treasure.style.boxShadow = "0 0 25px gold";
+                treasure.style.transform = "scale(1.2)";
+                treasure.style.transition = "all 1s";
+            } else {
+                // 纠错提示
+                let correction = "";
+                if (Math.abs(dy) > 50) {
+                    correction += dy > 0 ? `向南${Math.abs(dy)}像素<br>` : `向北${Math.abs(dy)}像素<br>`;
+                }
+                if (Math.abs(dx) > 50) {
+                    correction += dx > 0 ? `向西${Math.abs(dx)}像素<br>` : `向东${Math.abs(dx)}像素`;
+                }
+                
+                document.getElementById('result').innerHTML = 
+                    "<div style='color:#e74c3c;'>❌ 位置错误！宝藏不在这里</div>" +
+                    "<div>正确路线提示：</div>" +
+                    `<div style='background:#fdebd0;padding:10px;border-radius:5px;margin-top:10px;'>${correction}</div>` +
+                    "<button onclick='startJourney()' style='margin-top:15px;background:#3498db'>🔄 重新导航</button>";
+            }
+        }
+        
+        // 页面加载时初始化
+        window.onload = initMap;
+    </script>
+</body>
+</html>
